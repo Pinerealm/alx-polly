@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/app/lib/context/auth-context";
 import { Button } from "@/components/ui/button";
-import { deletePoll } from "@/app/lib/actions/poll-actions";
+
 
 /**
  * Interface defining the structure of a poll object.
@@ -102,8 +102,10 @@ export default function PollActions({ poll }: PollActionsProps) {
   const handleDelete = async () => {
     // Require user confirmation before deletion
     if (confirm("Are you sure you want to delete this poll?")) {
-      // Execute deletion via Server Action
-      await deletePoll(poll.id);
+      // Execute deletion via API route
+      await fetch(`/api/polls/${poll.id}`, {
+        method: 'DELETE',
+      });
       // Refresh page to show updated poll list
       window.location.reload();
     }

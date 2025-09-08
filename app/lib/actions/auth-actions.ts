@@ -129,11 +129,6 @@ export async function register(data: RegisterFormData) {
   const { error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
-    options: {
-      data: {
-        name: data.name, // Stored in user_metadata for display purposes
-      },
-    },
   });
 
   // Return error message if registration failed

@@ -1,14 +1,37 @@
-import { getPollById } from '@/app/lib/actions/poll-actions';
+"use client";
+
+import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-// Import the client component
 import EditPollForm from './EditPollForm';
+import { Poll } from '@/app/lib/types';
 
-export default async function EditPollPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { poll, error } = await getPollById(id);
+export default function EditPollPage({ params }: any) {
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (error || !poll) {
+  useEffect(() => {
+    const fetchPoll = async () => {
+      const response = await fetch(`/api/polls/${params.id}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error);
+      } else {
+        setPoll(data.poll);
+      }
+    };
+
+    if (params.id) {
+      fetchPoll();
+    }
+  }, [params.id]);
+
+  if (error) {
     notFound();
+  }
+
+  if (!poll) {
+    return <div>Loading...</div>;
   }
 
   return (

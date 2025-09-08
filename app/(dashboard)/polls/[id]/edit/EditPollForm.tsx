@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { updatePoll } from '@/app/lib/actions/poll-actions';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,11 +28,15 @@ export default function EditPollForm({ poll }: { poll: any }) {
       action={async (formData) => {
         setError(null);
         setSuccess(false);
-        formData.set('question', question);
-        formData.delete('options');
-        options.forEach((opt) => formData.append('options', opt));
-        const res = await updatePoll(poll.id, formData);
-        if (res?.error) {
+        
+        const response = await fetch(`/api/polls/${poll.id}`, {
+          method: 'PUT',
+          body: formData,
+        });
+
+        const res = await response.json();
+
+        if (!response.ok) {
           setError(res.error);
         } else {
           setSuccess(true);

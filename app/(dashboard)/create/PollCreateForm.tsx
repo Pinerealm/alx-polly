@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createPoll } from "@/app/lib/actions/poll-actions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,10 +122,14 @@ export default function PollCreateForm() {
         setError(null);
         setSuccess(false);
         
-        // Submit poll creation request to server
-        const res = await createPoll(formData);
+        const response = await fetch('/api/polls', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const res = await response.json();
         
-        if (res?.error) {
+        if (!response.ok) {
           // Display error message to user
           setError(res.error);
         } else {

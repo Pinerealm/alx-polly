@@ -104,7 +104,7 @@ export default function RegisterPage() {
     }
 
     // Attempt account creation using Server Action
-    const result = await register({ name, email, password });
+    const result = await register({ email, password });
 
     if (result?.error) {
       // Display error message and clear loading state

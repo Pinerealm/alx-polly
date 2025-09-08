@@ -1,7 +1,10 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getUserPolls } from '@/app/lib/actions/poll-actions';
-import PollActions from './PollActions'; 
+import PollActions from './PollActions';
+import { useEffect, useState } from 'react';
+import { Poll } from '@/app/lib/types'; 
 
 /**
  * User dashboard page displaying all polls created by the authenticated user.
@@ -55,9 +58,24 @@ import PollActions from './PollActions';
  * - Fetches: User's poll data, error states
  * - Displays: Poll grid, management actions, empty states
  */
-export default async function PollsPage() {
-  // Fetch user's polls using Server Action
-  const { polls, error } = await getUserPolls();
+export default function PollsPage() {
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPolls = async () => {
+      const response = await fetch('/api/polls');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error);
+      } else {
+        setPolls(data.polls);
+      }
+    };
+
+    fetchPolls();
+  }, []);
 
   return (
     <div className="space-y-6">

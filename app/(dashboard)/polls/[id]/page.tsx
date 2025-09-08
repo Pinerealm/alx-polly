@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,10 +22,15 @@ const mockPoll = {
   createdBy: 'John Doe',
 };
 
-export default function PollDetailPage({ params }: { params: { id: string } }) {
+export default function PollDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [pollId, setPollId] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    params.then(({ id }) => setPollId(id));
+  }, [params]);
 
   // In a real app, you would fetch the poll data based on the ID
   const poll = mockPoll;
@@ -56,7 +61,7 @@ export default function PollDetailPage({ params }: { params: { id: string } }) {
         </Link>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/polls/${params.id}/edit`}>Edit Poll</Link>
+            <Link href={`/polls/${pollId}/edit`}>Edit Poll</Link>
           </Button>
           <Button variant="outline" className="text-red-500 hover:text-red-700">
             Delete

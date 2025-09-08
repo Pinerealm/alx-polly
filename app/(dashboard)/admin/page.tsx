@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { deletePoll } from "@/app/lib/actions/poll-actions";
-import { createClient } from "@/lib/supabase/client";
+import { getAllPollsForAdmin, deletePollAsAdmin } from "@/lib/actions/admin-actions";
+import { requireAdmin } from "@/lib/admin-auth";
+import { AdminPollActions } from "@/app/(dashboard)/admin/AdminPollActions";
 
 interface Poll {
   id: string;
@@ -18,44 +16,25 @@ interface Poll {
   user_id: string;
   created_at: string;
   options: string[];
+  user_email?: string;
 }
 
-export default function AdminPage() {
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+export default async function AdminPage() {
+  // Require admin access - this will redirect if not admin
+  await requireAdmin();
+  
+  // Fetch all polls with admin authorization
+  const { polls, error } = await getAllPollsForAdmin();
 
-  useEffect(() => {
-    fetchAllPolls();
-  }, []);
-
-  const fetchAllPolls = async () => {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-      .from("polls")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      setPolls(data);
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (pollId: string) => {
-    setDeleteLoading(pollId);
-    const result = await deletePoll(pollId);
-
-    if (!result.error) {
-      setPolls(polls.filter((poll) => poll.id !== pollId));
-    }
-
-    setDeleteLoading(null);
-  };
-
-  if (loading) {
-    return <div className="p-6">Loading all polls...</div>;
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-8">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -63,7 +42,7 @@ export default function AdminPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Admin Panel</h1>
         <p className="text-gray-600 mt-2">
-          View and manage all polls in the system.
+          View and manage all polls in the system. Only authorized administrators can access this page.
         </p>
       </div>
 
@@ -83,10 +62,7 @@ export default function AdminPage() {
                         </code>
                       </div>
                       <div>
-                        Owner ID:{" "}
-                        <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
-                          {poll.user_id}
-                        </code>
+                        Owner: {poll.user_email || 'Unknown'} ({poll.user_id})
                       </div>
                       <div>
                         Created:{" "}
@@ -95,14 +71,7 @@ export default function AdminPage() {
                     </div>
                   </CardDescription>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(poll.id)}
-                  disabled={deleteLoading === poll.id}
-                >
-                  {deleteLoading === poll.id ? "Deleting..." : "Delete"}
-                </Button>
+                <AdminPollActions pollId={poll.id} />
               </div>
             </CardHeader>
             <CardContent>

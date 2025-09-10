@@ -48,7 +48,7 @@ export function usePollResults(pollId: string) {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'votes',
           filter: `poll_id=eq.${pollId}`,

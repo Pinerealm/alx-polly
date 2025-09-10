@@ -45,7 +45,7 @@ export function getUserVote(votes: { user_id: string | null; option_index: numbe
   if (!userId) return null;
   
   const userVote = votes.find(vote => vote.user_id === userId);
-  return userVote ? userVote.option_index : null;
+  return userVote !== undefined ? userVote.option_index : null;
 }
 
 /**
@@ -99,6 +99,6 @@ export function createPollResults(
     results,
     total_votes: totalVotes,
     has_user_voted: userVote !== null,
-    user_vote: userVote || undefined
+    user_vote: userVote ?? undefined
   };
 }

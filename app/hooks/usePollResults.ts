@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { PollResults } from '@/app/lib/types';
-import { createPollResults } from '@/app/lib/vote-utils';
 
 export function usePollResults(pollId: string) {
   const [results, setResults] = useState<PollResults | null>(null);
@@ -19,35 +18,17 @@ export function usePollResults(pollId: string) {
       setLoading(true);
       setError(null);
 
-      // Fetch poll data
-      const { data: poll, error: pollError } = await supabase
-        .from('polls')
-        .select('*')
-        .eq('id', pollId)
-        .single();
-
-      if (pollError) {
-        setError('Failed to fetch poll');
+      // Fetch poll results from server endpoint
+      const response = await fetch(`/api/polls/${pollId}/results`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to fetch poll results');
         return;
       }
 
-      // Fetch votes data
-      const { data: votes, error: votesError } = await supabase
-        .from('votes')
-        .select('user_id, option_index')
-        .eq('poll_id', pollId);
-
-      if (votesError) {
-        setError('Failed to fetch votes');
-        return;
-      }
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Create poll results
-      const pollResults = createPollResults(poll, votes || [], user?.id || null);
-      setResults(pollResults);
+      const data = await response.json();
+      setResults(data.results);
     } catch (err) {
       setError('Failed to fetch poll results');
     } finally {

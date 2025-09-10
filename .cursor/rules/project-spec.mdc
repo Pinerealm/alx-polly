@@ -45,7 +45,10 @@ The project uses the following technologies. Do not introduce new libraries or f
 - Implement proper authentication and authorization checks.
 - Use Row Level Security (RLS) policies in Supabase for data access control.
 - Be aware of common vulnerabilities like SQL injection, XSS, CSRF, and authorization bypasses.
-
+- Enforce CSRF protections for POST routes (or require same-site cookies + strict Origin/Referer checks).
+- Add rate limiting and abuse detection on vote submission endpoints.
+- Enforce database-level constraints to prevent duplicate votes (e.g., UNIQUE(poll_id, user_id) WHERE user_id IS NOT NULL).
+- Validate request schemas with Zod (typesafe server-side parsing) before any DB access.
 ## Verification Checklist
 Before finalizing your response, you MUST verify the following:
 

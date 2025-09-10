@@ -22,10 +22,10 @@ export async function GET(
   );
 
   try {
-    // Get the poll
+    // Get the poll (select only non-PII fields)
     const { data: poll, error: pollError } = await supabase
       .from("polls")
-      .select("*")
+      .select("id, question, options, created_at")
       .eq("id", id)
       .single();
 
@@ -57,7 +57,24 @@ export async function GET(
     // Create poll results
     const results = createPollResults(poll, votes || [], user?.id || null);
 
-    return NextResponse.json({ results, error: null }, { status: 200 });
+    // Return only the necessary data, excluding any PII
+    return NextResponse.json({ 
+      results: {
+        poll: {
+          id: results.poll.id,
+          question: results.poll.question,
+          options: results.poll.options,
+          created_at: results.poll.created_at,
+          total_votes: results.poll.total_votes,
+          vote_counts: results.poll.vote_counts
+        },
+        results: results.results,
+        total_votes: results.total_votes,
+        has_user_voted: results.has_user_voted,
+        user_vote: results.user_vote
+      }, 
+      error: null 
+    }, { status: 200 });
   } catch (error) {
     console.error("Error fetching poll results:", error);
     return NextResponse.json(

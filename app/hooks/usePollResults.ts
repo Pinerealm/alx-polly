@@ -1,0 +1,94 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { PollResults } from '@/app/lib/types';
+import { createPollResults } from '@/app/lib/vote-utils';
+
+export function usePollResults(pollId: string) {
+  const [results, setResults] = useState<PollResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const fetchResults = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch poll data
+      const { data: poll, error: pollError } = await supabase
+        .from('polls')
+        .select('*')
+        .eq('id', pollId)
+        .single();
+
+      if (pollError) {
+        setError('Failed to fetch poll');
+        return;
+      }
+
+      // Fetch votes data
+      const { data: votes, error: votesError } = await supabase
+        .from('votes')
+        .select('user_id, option_index')
+        .eq('poll_id', pollId);
+
+      if (votesError) {
+        setError('Failed to fetch votes');
+        return;
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create poll results
+      const pollResults = createPollResults(poll, votes || [], user?.id || null);
+      setResults(pollResults);
+    } catch (err) {
+      setError('Failed to fetch poll results');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!pollId) return;
+
+    // Initial fetch
+    fetchResults();
+
+    // Set up real-time subscription for votes
+    const votesSubscription = supabase
+      .channel(`poll-${pollId}-votes`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'votes',
+          filter: `poll_id=eq.${pollId}`,
+        },
+        () => {
+          // Refetch results when votes change
+          fetchResults();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      votesSubscription.unsubscribe();
+    };
+  }, [pollId]);
+
+  return {
+    results,
+    loading,
+    error,
+    refetch: fetchResults,
+  };
+}

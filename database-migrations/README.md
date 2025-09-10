@@ -10,17 +10,21 @@ To prevent duplicate votes at the database level, run the following migration:
 
 ```sql
 -- Run this in your Supabase SQL Editor
--- This creates a unique index to enforce one-vote-per-user per poll
+-- This migration safely handles existing duplicates before creating the unique index
 
-CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_votes_unique_user_poll 
-ON public.votes (poll_id, user_id) 
-WHERE user_id IS NOT NULL;
+-- Step 1: Check for existing duplicates
+-- Step 2: Clean up duplicate votes (keeps earliest vote per user/poll)
+-- Step 3: Verify cleanup was successful
+-- Step 4: Create unique index (will now succeed)
 ```
 
 **Important Notes:**
-- Use `CONCURRENTLY` to avoid locking the table during index creation
-- The `WHERE user_id IS NOT NULL` clause only applies the constraint to authenticated users
-- This prevents TOCTOU (Time-of-Check-Time-of-Use) race conditions
+- The migration automatically detects and removes duplicate votes
+- Keeps the earliest vote per poll_id/user_id combination
+- Only affects authenticated users (user_id IS NOT NULL)
+- Uses CONCURRENTLY to avoid locking the table during index creation
+- Includes verification steps to ensure success
+- Prevents TOCTOU (Time-of-Check-Time-of-Use) race conditions
 - The constraint will return SQLSTATE 23505 (duplicate key error) when violated
 
 ### 2. Verify the Migration

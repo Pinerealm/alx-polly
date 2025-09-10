@@ -4,14 +4,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Poll } from '@/app/lib/types';
+import { Poll, PollResults } from '@/app/lib/types';
+import { PollResults as PollResultsComponent } from '@/app/components/PollResults';
+import { usePollResults } from '@/app/hooks/usePollResults';
 
 export default function PollDetailPage({ params }: any) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use real-time poll results hook
+  const { results: pollResults, loading: isLoadingResults, error: resultsError, refetch } = usePollResults(params.id);
 
   useEffect(() => {
     const fetchPoll = async () => {
@@ -35,31 +39,38 @@ export default function PollDetailPage({ params }: any) {
 
     setIsSubmitting(true);
 
-    const response = await fetch(`/api/polls/${params.id}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ optionIndex: selectedOption }),
-    });
+    try {
+      const response = await fetch(`/api/polls/${params.id}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ optionIndex: selectedOption }),
+      });
 
-    if (response.ok) {
-      setHasVoted(true);
-    } else {
-      const data = await response.json();
-      setError(data.error || "Something went wrong.");
+      if (response.ok) {
+        // Results will be updated automatically via real-time subscription
+        // No need to manually refresh
+      } else {
+        const data = await response.json();
+        setError(data.error || "Something went wrong.");
+      }
+    } catch (err) {
+      setError('Failed to submit vote');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (error || resultsError) {
+    return <div>Error: {error || resultsError}</div>;
   }
 
   if (!poll) {
     return <div>Loading...</div>;
   }
+
+  const hasVoted = pollResults?.has_user_voted || false;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -97,18 +108,31 @@ export default function PollDetailPage({ params }: any) {
                   {option}
                 </div>
               ))}
-              <Button
-                onClick={handleVote}
-                disabled={selectedOption === null || isSubmitting}
-                className="mt-4"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Vote'}
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={handleVote}
+                  disabled={selectedOption === null || isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Vote'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={refetch}
+                  disabled={isLoadingResults}
+                >
+                  {isLoadingResults ? 'Loading...' : 'View Results'}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="font-medium">Results:</h3>
-              <div>Thank you for voting!</div>
+              {isLoadingResults ? (
+                <div className="text-center py-4">Loading results...</div>
+              ) : pollResults ? (
+                <PollResultsComponent results={pollResults} />
+              ) : (
+                <div className="text-center py-4">Failed to load results</div>
+              )}
             </div>
           )}
         </CardContent>

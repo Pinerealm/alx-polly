@@ -39,6 +39,16 @@ The project uses the following technologies. Do not introduce new libraries or f
 - Do not create a separate API route handler and use fetch on the client side to submit form data. Use Server Actions instead.
 - Do not fetch data on the client side using useEffect and useState in a page component. Fetch data directly in a Server Component.
 
+## Security Considerations
+- This project is designed as a security learning tool with intentionally vulnerable code.
+- Always validate and sanitize user inputs on both client and server side.
+- Implement proper authentication and authorization checks.
+- Use Row Level Security (RLS) policies in Supabase for data access control.
+- Be aware of common vulnerabilities like SQL injection, XSS, CSRF, and authorization bypasses.
+- Enforce CSRF protections for POST routes (or require same-site cookies + strict Origin/Referer checks).
+- Add rate limiting and abuse detection on vote submission endpoints.
+- Enforce database-level constraints to prevent duplicate votes (e.g., UNIQUE(poll_id, user_id) WHERE user_id IS NOT NULL).
+- Validate request schemas with Zod (typesafe server-side parsing) before any DB access.
 ## Verification Checklist
 Before finalizing your response, you MUST verify the following:
 
@@ -47,3 +57,5 @@ Before finalizing your response, you MUST verify the following:
 - Is the Supabase client used for all database interactions?
 - Are shadcn/ui components used for the UI where appropriate?
 - Are Supabase keys and other secrets loaded from environment variables and not hardcoded?
+- Are proper security measures implemented (input validation, authentication, authorization)?
+- Is the code following security best practices for a learning-focused security audit project?

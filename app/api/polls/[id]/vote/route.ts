@@ -1,4 +1,3 @@
-
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -7,9 +6,9 @@ import { z } from "zod";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
+  const { id } = params;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,6 +55,14 @@ export async function POST(
       return NextResponse.json(
         { error: "Poll not found" }, 
         { status: 404 }
+      );
+    }
+
+    // Check if the poll has expired
+    if (poll.expires_at && new Date(poll.expires_at) < new Date()) {
+      return NextResponse.json(
+        { error: "This poll has expired." },
+        { status: 400 }
       );
     }
 

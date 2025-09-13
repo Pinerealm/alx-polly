@@ -92,7 +92,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to get user role
 CREATE OR REPLACE FUNCTION public.get_user_role(user_uuid UUID DEFAULT auth.uid())
-RETURNS TEXT AS $$
+RETURNS TEXT AS $
 DECLARE
     user_role TEXT;
 BEGIN
@@ -103,7 +103,7 @@ BEGIN
     
     RETURN COALESCE(user_role, 'user');
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- =============================================
 -- INITIAL ADMIN SETUP

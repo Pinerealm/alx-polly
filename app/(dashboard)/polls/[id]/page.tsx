@@ -8,7 +8,7 @@ import { Poll, PollResults } from '@/app/lib/types';
 import { PollResults as PollResultsComponent } from '@/app/components/PollResults';
 import { usePollResults } from '@/app/hooks/usePollResults';
 
-export default function PollDetailPage({ params }: any) {
+export default function PollDetailPage({ params }: { params: { id: string } }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +139,12 @@ export default function PollDetailPage({ params }: any) {
         <CardFooter className="text-sm text-slate-500 flex justify-between">
           <span>Created by user: {poll.user_id}</span>
           <span>Created on {new Date(poll.created_at).toLocaleDateString()}</span>
+          {poll.expires_at && (
+            <span>
+              Expires on {new Date(poll.expires_at).toLocaleDateString()} at{' '}
+              {new Date(poll.expires_at).toLocaleTimeString()}
+            </span>
+          )}
         </CardFooter>
       </Card>
 

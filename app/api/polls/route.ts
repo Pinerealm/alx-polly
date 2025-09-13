@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const question = formData.get("question") as string;
   const options = formData.getAll("options").filter(Boolean) as string[];
+  const expires_at = formData.get("expires_at") as string;
 
   if (!question || options.length < 2) {
     return NextResponse.json(
@@ -49,13 +50,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error } = await supabase.from("polls").insert([
-    {
-      user_id: user.id,
-      question,
-      options,
-    },
-  ]);
+  const pollData: {
+    user_id: string;
+    question: string;
+    options: string[];
+    expires_at?: string;
+  } = {
+    user_id: user.id,
+    question,
+    options,
+  };
+
+  if (expires_at) {
+    pollData.expires_at = expires_at;
+  }
+
+  const { error } = await supabase.from("polls").insert([pollData]);
+
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

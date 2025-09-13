@@ -4,6 +4,7 @@ export type Poll = {
   options: string[];
   user_id: string;
   created_at: string;
+  expires_at?: string;
   total_votes?: number;
   vote_counts?: number[];
 };

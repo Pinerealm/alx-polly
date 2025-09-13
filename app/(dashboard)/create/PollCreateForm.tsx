@@ -64,6 +64,7 @@ import { Label } from "@/components/ui/label";
 export default function PollCreateForm() {
   // Local state management for form data and UI feedback
   const [options, setOptions] = useState(["", ""]); // Start with 2 empty options (minimum required)
+  const [expiresAt, setExpiresAt] = useState(""); // New state for expiration date
   const [error, setError] = useState<string | null>(null); // Error message display
   const [success, setSuccess] = useState(false); // Success state for feedback
 
@@ -171,6 +172,17 @@ export default function PollCreateForm() {
           Add Option
         </Button>
       </div>
+      {/* Expiration date input - optional */}
+      <div>
+        <Label htmlFor="expires_at">Expires At (Optional)</Label>
+        <Input
+          name="expires_at"
+          id="expires_at"
+          type="datetime-local"
+          value={expiresAt}
+          onChange={(e) => setExpiresAt(e.target.value)}
+        />
+      </div>
       {/* Error and success feedback */}
       {error && <div className="text-red-500">{error}</div>}
       {success && <div className="text-green-600">Poll created! Redirecting...</div>}
@@ -179,4 +191,4 @@ export default function PollCreateForm() {
       <Button type="submit">Create Poll</Button>
     </form>
   );
-} 
+}

@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -31,7 +31,7 @@ export async function GET(
     // Get the poll (select only non-PII fields)
     const { data: poll, error: pollError } = await supabase
       .from("polls")
-      .select("id, question, options, created_at")
+      .select("id, question, options, created_at, user_id")
       .eq("id", id)
       .single();
 
